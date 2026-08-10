@@ -41,7 +41,6 @@ int main() {
     return 1;
   }
 
-  int client_fd = ::accept(server_fd, nullptr, nullptr);
 
   while (true) {
     int client_fd = ::accept(server_fd, nullptr, nullptr);
