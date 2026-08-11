@@ -1,3 +1,6 @@
+#include "UniqueFd.hpp"
+#include "socket.hpp"
+
 #include <arpa/inet.h>
 #include <array>
 #include <cstring>
@@ -23,30 +26,29 @@ int main() {
     return 1;
   }
 
-  int socket_fd = -1;
+  UniqueFd socket_fd;
 
   for (addrinfo* addr = results; addr != nullptr; addr = addr->ai_next) {
-    socket_fd = ::socket(
+    auto result = net::create_socket(
         addr->ai_family,
         addr->ai_socktype,
         addr->ai_protocol
     );
 
-    if (socket_fd == -1) {
+    if (!result) {
       continue;
     }
     
-    if (::connect(socket_fd, addr->ai_addr, addr->ai_addrlen) == 0) {
+    socket_fd = std::move(*result);
+
+    if (::connect(socket_fd.get(), addr->ai_addr, addr->ai_addrlen) == 0) {
       break;
     }
-
-    ::close(socket_fd);
-    socket_fd = -1;
   }
 
   ::freeaddrinfo(results);
 
-  if (socket_fd == -1) {
+  if (!socket_fd.valid()) {
     std::cerr << "connect() failed\n";
     return 1;
   }
@@ -57,9 +59,9 @@ int main() {
   std::array<char, 4096> buffer{};
 
   while (std::getline(std::cin, message)) {
-    ::send(socket_fd, message.data(), message.size(), 0);
+    ::send(socket_fd.get(), message.data(), message.size(), 0);
 
-    ssize_t bytes_received = recv(socket_fd, buffer.data(), buffer.size(), 0);
+    ssize_t bytes_received = recv(socket_fd.get(), buffer.data(), buffer.size(), 0);
 
     if (bytes_received > 0) {
       std::cout << "Server: ";
@@ -75,6 +77,4 @@ int main() {
       break;
     }
   }
-
-  ::close(socket_fd);
 }
