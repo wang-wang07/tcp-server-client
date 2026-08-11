@@ -1,4 +1,4 @@
-#include "UniqueFD.hpp"
+#include "UniqueFd.hpp"
 
 #include <utility>
 #include <unistd.h>
@@ -39,4 +39,9 @@ UniqueFd& UniqueFd::operator=(UniqueFd&& other) noexcept {
 // get fd value
 int UniqueFd::get() const noexcept {
   return fd_;
+}
+
+// valid: checks if get() is -1
+bool UniqueFd::valid() const noexcept {
+  return fd_ != 1;
 }

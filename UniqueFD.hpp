@@ -19,6 +19,8 @@ public:
   UniqueFd& operator=(UniqueFd&&) noexcept;
 
   int get() const noexcept;
+  bool valid() const noexcept;
+
 
 private:
   int fd_ = -1;

@@ -1,61 +1,71 @@
-#include <arpa/inet.h>
 #include <array>
-#include <cstddef>
-#include <cstring>
 #include <iostream>
-#include <netinet/in.h>
-#include <string>
+#include <netdb.h>
+#include <regex>
 #include <sys/socket.h>
 #include <unistd.h>
 
 int main() {
-  // create server fd, ipv4, byte stream socket
-  // and check for failure
-  int server_fd = ::socket(AF_INET, SOCK_STREAM, 0);
+  addrinfo hints{};
+
+  hints.ai_family = AF_UNSPEC;
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_flags = AI_PASSIVE;
+
+  addrinfo* results = nullptr;
+
+  int status = ::getaddrinfo(nullptr, "8080", &hints, &results);
+
+  if (status != 0) {
+    std::cerr << "getaddrinfo() failed: " << ::gai_strerror(status) << '\n';
+    return 1;
+  }
+
+  int server_fd = -1;
+
+  for (addrinfo* addr = results; addr != nullptr; addr = addr->ai_next) {
+    server_fd = ::socket(
+        addr->ai_family,
+        addr->ai_socktype,
+        addr->ai_protocol
+    );
+
+    if (server_fd == -1) {
+      continue;
+    }
+
+    if (::bind(server_fd, addr->ai_addr, addr->ai_addrlen) == 0) {
+      break;
+    }
+
+    ::close(server_fd);
+    server_fd = -1;
+  }
+
+  ::freeaddrinfo(results);
 
   if (server_fd == -1) {
-    std::cerr << "server socket() failed\n";
+    std::cerr << "could not bind to any address\n";
     return 1;
   }
-
-  //give server adderess
-  sockaddr_in address{};
-
-  address.sin_family = AF_INET; //ipv4
-  address.sin_addr.s_addr = htonl(INADDR_ANY); // accept connections through an network interface
-  address.sin_port = htons(8080); // convert host to network short
-
-  // bind: attatch a socket to address
-
-  if (::bind(server_fd, reinterpret_cast<sockaddr*>(&address), sizeof(address)) == -1) {
-    std::cerr << "bind() failed\n";
-    ::close(server_fd);
-    return 1;
-  }
-
-  //listen
 
   if (::listen(server_fd, 10) == -1) {
-    std::cerr << "listen() failed\n";
+    std::cerr << "listen() failes\n";
     ::close(server_fd);
     return 1;
   }
-
 
   while (true) {
     int client_fd = ::accept(server_fd, nullptr, nullptr);
-
     if (client_fd == -1) {
       std::cerr << "accept() failes\n";
       continue;
     }
 
-    std::cout << "client connects\n";
-
-
+    std::cout << "client connected\n";
     std::array<char, 4096> buffer{};
 
-    while(true) {
+    while (true) {
       ssize_t bytes_received = ::recv(client_fd, buffer.data(), buffer.size(), 0);
 
       if (bytes_received > 0) {
@@ -63,19 +73,13 @@ int main() {
       }
       else if (bytes_received == 0) {
         std::cout << "client disconnect\n";
-        break;
       }
       else {
-        std::cerr << "recv() failed\n";
+        std::cerr << "recv() failes\n";
         break;
       }
     }
 
     ::close(client_fd);
   }
-
-
-  close(server_fd);
-  return 0;
 }
-
