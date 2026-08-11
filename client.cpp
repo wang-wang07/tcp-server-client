@@ -6,25 +6,48 @@
 #include <string>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <netdb.h>
 
 
 int main() {
-  int socket_fd = ::socket(AF_INET, SOCK_STREAM, 0);
+  addrinfo hints{};
+  hints.ai_family = AF_UNSPEC;
+  hints.ai_socktype = SOCK_STREAM;
 
-  sockaddr_in server_address{};
-  server_address.sin_family = AF_INET;
-  server_address.sin_port = htons(8080);
+  addrinfo* results = nullptr;
 
-  if (::inet_pton(AF_INET, "127.0.0.1", &server_address.sin_addr) != 1) {
-    std::cerr << "Invalid IP addres\n";
-    ::close(socket_fd);
+  int status = ::getaddrinfo("localhost", "8080", &hints, &results);
+
+  if (status != 0) {
+    std::cerr << "getaddrinfo() faild: " << ::gai_strerror(status) << '\n';
     return 1;
   }
 
-  if (::connect(socket_fd, reinterpret_cast<sockaddr*>(&server_address), sizeof(server_address)) == -1) {
+  int socket_fd = -1;
 
-    std::cerr << "connect() failed\n";
+  for (addrinfo* addr = results; addr != nullptr; addr = addr->ai_next) {
+    socket_fd = ::socket(
+        addr->ai_family,
+        addr->ai_socktype,
+        addr->ai_protocol
+    );
+
+    if (socket_fd == -1) {
+      continue;
+    }
+    
+    if (::connect(socket_fd, addr->ai_addr, addr->ai_addrlen) == 0) {
+      break;
+    }
+
     ::close(socket_fd);
+    socket_fd = -1;
+  }
+
+  ::freeaddrinfo(results);
+
+  if (socket_fd == -1) {
+    std::cerr << "connect() failed\n";
     return 1;
   }
 
@@ -35,7 +58,8 @@ int main() {
 
   while (std::getline(std::cin, message)) {
     ::send(socket_fd, message.data(), message.size(), 0);
-    ssize_t bytes_received = ::recv(socket_fd, buffer.data(), buffer.size(), 0);
+
+    ssize_t bytes_received = recv(socket_fd, buffer.data(), buffer.size(), 0);
 
     if (bytes_received > 0) {
       std::cout << "Server: ";
@@ -44,7 +68,6 @@ int main() {
     }
     else if (bytes_received == 0) {
       std::cout << "server disconnected\n";
-
       break;
     }
     else {

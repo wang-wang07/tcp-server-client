@@ -1,7 +1,6 @@
 #include <array>
 #include <iostream>
 #include <netdb.h>
-#include <regex>
 #include <sys/socket.h>
 #include <unistd.h>
 
@@ -73,6 +72,7 @@ int main() {
       }
       else if (bytes_received == 0) {
         std::cout << "client disconnect\n";
+        break;
       }
       else {
         std::cerr << "recv() failes\n";
