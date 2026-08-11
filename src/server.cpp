@@ -1,3 +1,6 @@
+#include "UniqueFd.hpp"
+#include "socket.hpp"
+
 #include <array>
 #include <iostream>
 #include <netdb.h>
@@ -20,42 +23,39 @@ int main() {
     return 1;
   }
 
-  int server_fd = -1;
+  UniqueFd server_fd;
 
   for (addrinfo* addr = results; addr != nullptr; addr = addr->ai_next) {
-    server_fd = ::socket(
+    auto result = net::create_socket(
         addr->ai_family,
         addr->ai_socktype,
         addr->ai_protocol
     );
 
-    if (server_fd == -1) {
+    if (!result) {
       continue;
     }
 
-    if (::bind(server_fd, addr->ai_addr, addr->ai_addrlen) == 0) {
+    server_fd = std::move(*result);
+    if (::bind(server_fd.get(), addr->ai_addr, addr->ai_addrlen) == 0) {
       break;
     }
-
-    ::close(server_fd);
-    server_fd = -1;
   }
 
   ::freeaddrinfo(results);
 
-  if (server_fd == -1) {
+  if (!server_fd.valid()) {
     std::cerr << "could not bind to any address\n";
     return 1;
   }
 
-  if (::listen(server_fd, 10) == -1) {
-    std::cerr << "listen() failes\n";
-    ::close(server_fd);
+  if (::listen(server_fd.get(), 10) == -1) {
+    std::cerr << "listen() fails\n";
     return 1;
   }
 
   while (true) {
-    int client_fd = ::accept(server_fd, nullptr, nullptr);
+    int client_fd = ::accept(server_fd.get(), nullptr, nullptr);
     if (client_fd == -1) {
       std::cerr << "accept() failes\n";
       continue;
