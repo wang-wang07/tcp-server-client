@@ -15,8 +15,11 @@ execute_process(
 
 add_library(tcp_common
   src/UniqueFd.cpp
+  src/socket.cpp
+  src/store.cpp
   include/UniqueFd.hpp
   include/socket.hpp
+  include/store.hpp
 )
 
 target_include_directories(tcp_common

@@ -55,8 +55,8 @@ int main() {
   }
 
   while (true) {
-    int client_fd = ::accept(server_fd.get(), nullptr, nullptr);
-    if (client_fd == -1) {
+    UniqueFd client_fd = UniqueFd(::accept(server_fd.get(), nullptr, nullptr));
+    if (!client_fd.valid()) {
       std::cerr << "accept() failes\n";
       continue;
     }
@@ -65,10 +65,10 @@ int main() {
     std::array<char, 4096> buffer{};
 
     while (true) {
-      ssize_t bytes_received = ::recv(client_fd, buffer.data(), buffer.size(), 0);
+      ssize_t bytes_received = ::recv(client_fd.get(), buffer.data(), buffer.size(), 0);
 
       if (bytes_received > 0) {
-        ::send(client_fd, buffer.data(), bytes_received, 0);
+        ::send(client_fd.get(), buffer.data(), bytes_received, 0);
       }
       else if (bytes_received == 0) {
         std::cout << "client disconnect\n";
@@ -79,7 +79,5 @@ int main() {
         break;
       }
     }
-
-    ::close(client_fd);
   }
 }

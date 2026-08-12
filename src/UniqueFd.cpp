@@ -49,5 +49,5 @@ int UniqueFd::get() const noexcept {
 
 // valid: checks if get() is -1
 bool UniqueFd::valid() const noexcept {
-  return fd_ != 1;
+  return fd_ != -1;
 }
