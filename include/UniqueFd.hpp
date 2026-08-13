@@ -18,8 +18,8 @@ public:
   UniqueFd(UniqueFd&&) noexcept;
   UniqueFd& operator=(UniqueFd&&) noexcept;
 
-  int get() const noexcept;
-  bool valid() const noexcept;
+  [[nodiscard]] int get() const noexcept;
+  [[nodiscard]] bool valid() const noexcept;
 
 
 private:
