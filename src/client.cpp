@@ -59,6 +59,7 @@ int main() {
   std::array<char, 4096> buffer{};
 
   while (std::getline(std::cin, message)) {
+    message += '\n';
     ::send(socket_fd.get(), message.data(), message.size(), 0);
 
     ssize_t bytes_received = recv(socket_fd.get(), buffer.data(), buffer.size(), 0);

@@ -1,10 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(tcp_server_client)
+project(tcp_server_client LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 execute_process(
@@ -23,17 +20,22 @@ endfunction()
 
 add_library(tcp_common
   src/UniqueFd.cpp
+  src/framing.cpp
   src/parser.cpp
   src/socket.cpp
   src/store.cpp
   src/executor.cpp
   include/UniqueFd.hpp
   include/protocol/command.hpp
+  include/protocol/framing.hpp
   include/protocol/parser.hpp
+  include/protocol/protocol.hpp
   include/protocol/executor.hpp
   include/socket.hpp
   include/store.hpp
 )
+
+target_compile_features(tcp_common PUBLIC cxx_std_23)
 
 target_include_directories(tcp_common
   PUBLIC

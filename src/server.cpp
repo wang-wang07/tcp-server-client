@@ -1,13 +1,18 @@
 #include "UniqueFd.hpp"
 #include "socket.hpp"
 
-#include <array>
+#include "protocol/protocol.hpp"
+#include "store.hpp"
+
+
 #include <iostream>
 #include <netdb.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
+
 int main() {
+  KeyValueStore MASTER_STORE;
   addrinfo hints{};
 
   hints.ai_family = AF_UNSPEC;
@@ -25,6 +30,7 @@ int main() {
 
   UniqueFd server_fd;
 
+  bool bound = false;
   for (addrinfo* addr = results; addr != nullptr; addr = addr->ai_next) {
     auto result = net::create_socket(
         addr->ai_family,
@@ -38,13 +44,14 @@ int main() {
 
     server_fd = std::move(*result);
     if (::bind(server_fd.get(), addr->ai_addr, addr->ai_addrlen) == 0) {
+      bound = true;
       break;
     }
   }
 
   ::freeaddrinfo(results);
 
-  if (!server_fd.valid()) {
+  if (!bound) {
     std::cerr << "could not bind to any address\n";
     return 1;
   }
@@ -62,21 +69,37 @@ int main() {
     }
 
     std::cout << "client connected\n";
-    std::array<char, 4096> buffer{};
-
+    std::string message_buffer;
     while (true) {
-      ssize_t bytes_received = ::recv(client_fd.get(), buffer.data(), buffer.size(), 0);
+      char chunk[4096];
+      ssize_t bytes_received = ::recv(client_fd.get(), chunk, sizeof(chunk), 0);
 
-      if (bytes_received > 0) {
-        ::send(client_fd.get(), buffer.data(), bytes_received, 0);
-      }
-      else if (bytes_received == 0) {
+      if (bytes_received == 0) {
         std::cout << "client disconnect\n";
         break;
       }
-      else {
-        std::cerr << "recv() failes\n";
+
+      if (bytes_received < 0) {
+        std::cerr << "recv() error\n";
         break;
+      }
+
+      message_buffer.append(chunk, bytes_received);
+
+      while (auto message = next_message(message_buffer)) {
+
+        auto command = parse_command(*message);
+
+        if (!command) {
+          constexpr std::string_view response = "INVALID COMMAND MESSAGE\n";
+          ::send(client_fd.get(), response.data(), response.size(), 0);
+          continue;
+        }
+
+        auto response = execute_command(*command, MASTER_STORE);
+        response += '\n';
+
+        ::send(client_fd.get(), response.data(), response.size(), 0);
       }
     }
   }
