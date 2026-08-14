@@ -26,9 +26,11 @@ add_library(tcp_common
   src/parser.cpp
   src/socket.cpp
   src/store.cpp
+  src/executor.cpp
   include/UniqueFd.hpp
   include/protocol/command.hpp
   include/protocol/parser.hpp
+  include/protocol/executor.hpp
   include/socket.hpp
   include/store.hpp
 )
