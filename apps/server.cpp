@@ -1,8 +1,8 @@
-#include "UniqueFd.hpp"
-#include "socket.hpp"
+#include "tcp/net/unique_fd.hpp"
+#include "tcp/net/socket.hpp"
 
-#include "protocol/protocol.hpp"
-#include "store.hpp"
+#include "tcp/protocol/protocol.hpp"
+#include "tcp/store.hpp"
 
 
 #include <iostream>
@@ -89,7 +89,10 @@ int main() {
       auto response = execute_command(*command, MASTER_STORE);
       response += '\n';
 
-      ::send(client_fd.get(), response.data(), response.size(), 0);
+      if (!send_all(client_fd.get(), response)) {
+        std::cerr << "send failed!\n";
+        break;
+      }
     }
   }
 }

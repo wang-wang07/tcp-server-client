@@ -1,6 +1,6 @@
-#include "protocol/executor.hpp"
-#include "protocol/parser.hpp"
-#include "store.hpp"
+#include "tcp/protocol/executor.hpp"
+#include "tcp/protocol/parser.hpp"
+#include "tcp/store.hpp"
 
 #include <iostream>
 #include <string>

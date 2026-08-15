@@ -1,7 +1,7 @@
-#include "protocol/executor.hpp"
+#include "tcp/protocol/executor.hpp"
 
-#include "protocol/command.hpp"
-#include "store.hpp"
+#include "tcp/protocol/command.hpp"
+#include "tcp/store.hpp"
 
 std::string execute_command(const Command& command, KeyValueStore& store) {
   switch (command.type) {

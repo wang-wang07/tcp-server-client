@@ -1,6 +1,6 @@
-#include "UniqueFd.hpp"
-#include "socket.hpp"
-#include "protocol/framing.hpp"
+#include "tcp/net/unique_fd.hpp"
+#include "tcp/net/socket.hpp"
+#include "tcp/protocol/framing.hpp"
 
 #include <arpa/inet.h>
 #include <array>
@@ -60,7 +60,10 @@ int main() {
 
   while (std::getline(std::cin, message)) {
     message += '\n';
-    ::send(socket_fd.get(), message.data(), message.size(), 0);
+    if (!send_all(socket_fd.get(), message)) {
+      std::cerr << "send failed!\n";
+      break;
+    }
 
     auto response = read_message(socket_fd.get(), response_buffer);
 

@@ -1,5 +1,5 @@
-#include "socket.hpp"
-#include "UniqueFd.hpp"
+#include "tcp/net/socket.hpp"
+#include "tcp/net/unique_fd.hpp"
 
 #include <cerrno>
 #include <sys/socket.h>

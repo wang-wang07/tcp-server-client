@@ -1,3 +1,7 @@
 build/
+/build-*/
+/cmake-build-*/
+.cache/
 compile_commands.json
 build_instructions.md
+.DS_Store
