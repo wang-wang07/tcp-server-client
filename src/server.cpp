@@ -71,36 +71,25 @@ int main() {
     std::cout << "client connected\n";
     std::string message_buffer;
     while (true) {
-      char chunk[4096];
-      ssize_t bytes_received = ::recv(client_fd.get(), chunk, sizeof(chunk), 0);
+      auto message = read_message(client_fd.get(), message_buffer);
 
-      if (bytes_received == 0) {
+      if (!message) {
         std::cout << "client disconnect\n";
         break;
       }
 
-      if (bytes_received < 0) {
-        std::cerr << "recv() error\n";
-        break;
-      }
+      auto command = parse_command(*message);
 
-      message_buffer.append(chunk, bytes_received);
-
-      while (auto message = next_message(message_buffer)) {
-
-        auto command = parse_command(*message);
-
-        if (!command) {
-          constexpr std::string_view response = "INVALID COMMAND MESSAGE\n";
-          ::send(client_fd.get(), response.data(), response.size(), 0);
-          continue;
-        }
-
-        auto response = execute_command(*command, MASTER_STORE);
-        response += '\n';
-
+      if (!command) {
+        constexpr std::string_view response = "INVALID COMMAND MESSAGE\n";
         ::send(client_fd.get(), response.data(), response.size(), 0);
+        continue;
       }
+
+      auto response = execute_command(*command, MASTER_STORE);
+      response += '\n';
+
+      ::send(client_fd.get(), response.data(), response.size(), 0);
     }
   }
 }

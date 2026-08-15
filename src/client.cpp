@@ -1,5 +1,6 @@
 #include "UniqueFd.hpp"
 #include "socket.hpp"
+#include "protocol/framing.hpp"
 
 #include <arpa/inet.h>
 #include <array>
@@ -10,7 +11,6 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <netdb.h>
-
 
 int main() {
   addrinfo hints{};
@@ -56,26 +56,19 @@ int main() {
   std::cout << "connected to server\n";
 
   std::string message;
-  std::array<char, 4096> buffer{};
+  std::string response_buffer;
 
   while (std::getline(std::cin, message)) {
     message += '\n';
     ::send(socket_fd.get(), message.data(), message.size(), 0);
 
-    ssize_t bytes_received = recv(socket_fd.get(), buffer.data(), buffer.size(), 0);
+    auto response = read_message(socket_fd.get(), response_buffer);
 
-    if (bytes_received > 0) {
-      std::cout << "Server: ";
-      std::cout.write(buffer.data(), bytes_received);
-      std::cout << '\n';
-    }
-    else if (bytes_received == 0) {
+    if (!response) {
       std::cout << "server disconnected\n";
       break;
     }
-    else {
-      std::cerr << "recv() failed\n";
-      break;
-    }
+
+    std::cout << "Server: " << *response << '\n';
   }
 }
