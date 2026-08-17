@@ -1,6 +1,6 @@
 # TCP Server and Client
 
-A C++TCP client and server backed by an in-memory key-value store.
+A C++TCP client and server backed by an in-memory key-value store. WORK IN PROGRESS
 
 ## Build
 
