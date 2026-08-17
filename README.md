@@ -33,3 +33,6 @@ For a production-only build that does not download or build GoogleTest:
 ```sh
 cmake -S . -B build -DBUILD_TESTING=OFF
 ```
+
+## Disclaimer Of AI Use
+I did use Codex to setup Cmake and the testing for this project, and to help reorganize some files
