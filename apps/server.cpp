@@ -3,7 +3,7 @@
 
 #include "tcp/protocol/protocol.hpp"
 #include "tcp/store.hpp"
-
+#include "tcp/server/client_handler.hpp"
 
 #include <iostream>
 #include <netdb.h>
@@ -68,31 +68,6 @@ int main() {
       continue;
     }
 
-    std::cout << "client connected\n";
-    std::string message_buffer;
-    while (true) {
-      auto message = read_message(client_fd.get(), message_buffer);
-
-      if (!message) {
-        std::cout << "client disconnect\n";
-        break;
-      }
-
-      auto command = parse_command(*message);
-
-      if (!command) {
-        constexpr std::string_view response = "INVALID COMMAND MESSAGE\n";
-        ::send(client_fd.get(), response.data(), response.size(), 0);
-        continue;
-      }
-
-      auto response = execute_command(*command, MASTER_STORE);
-      response += '\n';
-
-      if (!send_all(client_fd.get(), response)) {
-        std::cerr << "send failed!\n";
-        break;
-      }
-    }
+    tcp::server::handle_client(std::move(client_fd), MASTER_STORE);
   }
 }

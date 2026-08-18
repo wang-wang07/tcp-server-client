@@ -26,6 +26,7 @@ add_library(tcp_common
   src/protocol/executor.cpp
   src/protocol/framing.cpp
   src/protocol/parser.cpp
+  src/server/client_handler.cpp
   src/store.cpp
   include/tcp/net/socket.hpp
   include/tcp/net/unique_fd.hpp
@@ -34,6 +35,7 @@ add_library(tcp_common
   include/tcp/protocol/framing.hpp
   include/tcp/protocol/parser.hpp
   include/tcp/protocol/protocol.hpp
+  include/tcp/server/client_handler.hpp
   include/tcp/store.hpp
 )
 
