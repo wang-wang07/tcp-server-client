@@ -2,6 +2,9 @@
 
 A C++TCP client and server backed by an in-memory key-value store. WORK IN PROGRESS
 
+## Disclaimer Of AI Use
+So far I did use Codex to setup Cmake and the testing for this project, and to help reorganize some files
+
 ## Build
 
 ```sh
@@ -34,5 +37,4 @@ For a production-only build that does not download or build GoogleTest:
 cmake -S . -B build -DBUILD_TESTING=OFF
 ```
 
-## Disclaimer Of AI Use
-I did use Codex to setup Cmake and the testing for this project, and to help reorganize some files
+
