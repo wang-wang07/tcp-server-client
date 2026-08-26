@@ -1,6 +1,9 @@
 # TCP Server and Client
 A C++TCP client and server backed by an in-memory key-value store
 
+The current implementation milestone is documented in
+[`docs/NEXT_GOAL.md`](docs/NEXT_GOAL.md).
+
 ## Build
 
 ```sh
@@ -35,4 +38,3 @@ cmake -S . -B build -DBUILD_TESTING=OFF
 
 ## AI Use Disclaimer
 - I used AI to guide me toward the milestones. Basically giving me the project goals to complete (TCP echo server/client -> Key Value Store -> Message Framing -> Concurrency, etc). I believed that this was a good use of AI in this project, because the goal was to learn more about c++ and systems programming.
-
