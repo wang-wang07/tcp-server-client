@@ -79,3 +79,39 @@ TEST(SocketTest, ReportsSocketCreationFailure) {
   ASSERT_FALSE(result.has_value());
   EXPECT_NE(result.error().value(), 0);
 }
+
+TEST(SocketTest, SetsSocketToNonblocking) {
+  int descriptors[2]{};
+  ASSERT_EQ(::socketpair(AF_UNIX, SOCK_STREAM, 0, descriptors), 0);
+  UniqueFd first{descriptors[0]};
+  UniqueFd second{descriptors[1]};
+
+  const int flags_before = ::fcntl(first.get(), F_GETFL);
+  ASSERT_NE(flags_before, -1);
+
+  const auto result = net::set_nonblocking(first.get());
+  ASSERT_TRUE(result.has_value());
+
+  const int flags_after = ::fcntl(first.get(), F_GETFL);
+  ASSERT_NE(flags_after, -1);
+  EXPECT_NE(flags_after & O_NONBLOCK, 0);
+  EXPECT_EQ(flags_after & flags_before, flags_before);
+}
+
+TEST(SocketTest, SettingNonblockingIsIdempotent) {
+  int descriptors[2]{};
+  ASSERT_EQ(::socketpair(AF_UNIX, SOCK_STREAM, 0, descriptors), 0);
+  UniqueFd first{descriptors[0]};
+  UniqueFd second{descriptors[1]};
+
+  EXPECT_TRUE(net::set_nonblocking(first.get()).has_value());
+  EXPECT_TRUE(net::set_nonblocking(first.get()).has_value());
+}
+
+TEST(SocketTest, ReportsNonblockingConfigurationFailure) {
+  const auto result = net::set_nonblocking(-1);
+
+  ASSERT_FALSE(result.has_value());
+  EXPECT_EQ(result.error(),
+            std::error_code(EBADF, std::generic_category()));
+}

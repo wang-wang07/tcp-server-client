@@ -8,4 +8,6 @@ namespace net {
 [[nodiscard]]
 std::expected<UniqueFd, std::error_code> create_socket(int domain, int type,
                                                        int protocol);
+[[nodiscard]]
+std::expected<void, std::error_code> set_nonblocking(int fd);
 }
