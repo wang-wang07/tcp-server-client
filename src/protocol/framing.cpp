@@ -28,7 +28,15 @@ std::optional<std::string> read_message(int fd, std::string& buffer) {
     std::array<char, 4096> chunk{};
     ssize_t bytes_received = ::recv(fd, chunk.data(), chunk.size(), 0);
 
-    if (bytes_received <= 0) {
+    if (bytes_received < 0) {
+      if (errno == EINTR) {
+        continue;
+      }
+
+      return std::nullopt;
+    }
+
+    if (bytes_received == 0) {
       return std::nullopt;
     }
 
