@@ -26,6 +26,9 @@ int main() {
       errno,
       std::generic_category()
     };
+
+    std::cerr << "setsockopt failed: " << error.message() << '\n';
+    return 1;
   }
 
   sockaddr_in address{};
