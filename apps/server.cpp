@@ -9,8 +9,11 @@
 #include <sys/epoll.h>
 #include <utility>
 #include <string_view>
+#include <unordered_map>
 
 namespace {
+  constexpr int kAcceptBudget = 64;
+
   void report_error(std::string_view operation, int error_number) {
     const std::error_code error {
       error_number,
@@ -83,6 +86,7 @@ int main() {
 
   std::cout << "listening on port 8080\n";
 
+  std::unordered_map<int, UniqueFd> clients;
   while (true) {
     epoll_event ready_event{};
     int ready_count{};
@@ -96,29 +100,94 @@ int main() {
       return 1;
     }
 
-    if (ready_event.data.fd != listener.get() || (ready_event.events & EPOLLIN) == 0) {
+    const int ready_fd = ready_event.data.fd;
+
+    if (ready_fd != listener.get()) {
+      const auto client_it = clients.find(ready_fd);
+
+      if (client_it == clients.end()) {
+        std::cerr << "epoll returned an unknown client descriptor\n";
+        return 1;
+      }
+
+      std::cout << "client event on fd " << ready_fd << ", flags=" << ready_event.events << '\n';
+
+      //temporary below
+      clients.erase(client_it);
+      continue;
+    }
+
+    if ((ready_event.events & EPOLLIN) == 0) {
       std::cerr << "listener reported an unexpected event\n";
       return 1;
     }
 
-    int accepted_fd {};
-    do {
-      accepted_fd = ::accept(listener.get(), nullptr, nullptr);
-    } while (accepted_fd == -1 && errno == EINTR);
+    int attempts = 0;
+    while (attempts < kAcceptBudget) {
+      const int accepted_fd = ::accept(listener.get(), nullptr, nullptr);
 
-    if (accepted_fd == -1) {
-      const int error = errno;
-      if (error == EAGAIN || error == EWOULDBLOCK) {
+      if (accepted_fd == -1) {
+        const int error = errno;
+        if (error == EINTR) {
+          continue;
+        }
+
+        if (error == EAGAIN || error == EWOULDBLOCK) {
+          break;
+        }
+
+        attempts++;
+
+        switch (error) {
+          case ECONNABORTED:
+          case ENETDOWN:
+          case EPROTO:
+          case ENOPROTOOPT:
+          case EHOSTDOWN:
+          case ENONET:
+          case EHOSTUNREACH:
+          case EOPNOTSUPP:
+          case ENETUNREACH:
+            report_error("accept", error);
+            continue;
+
+          default:
+            report_error("accept", error);
+            return 1;
+        }
+      }
+
+      UniqueFd client{accepted_fd};
+      attempts++;
+
+      const auto client_nonblocking = net::set_nonblocking(client.get());
+
+      if (!client_nonblocking) {
+        std::cerr << "could not make client nonblocking: "
+          << client_nonblocking.error().message() << '\n';
         continue;
       }
 
-      report_error("accept", error);
-      return 1;
+      const int client_fd = client.get();
+
+      const auto [client_it, inserted] = clients.try_emplace(client_fd, std::move(client));
+
+      if (!inserted) {
+        std::cerr << "accepted descriptor already has an owner\n";
+        return 1;
+      }
+
+      epoll_event client_event{};
+      client_event.events = EPOLLIN | EPOLLRDHUP;
+      client_event.data.fd = client_fd;
+
+      if (::epoll_ctl(epoll_instance.get(), EPOLL_CTL_ADD, client_fd, &client_event) == -1) {
+        report_error("epoll_ctl client add", errno);
+        clients.erase(client_it);
+        return 1;
+      }
+
+      std::cout << "registered client on fd " << client_fd << ", active=" << clients.size() << '\n';
     }
-
-    UniqueFd client{accepted_fd};
-
-    std::cout << "accepted client on fd " << client.get() << '\n';
-    return 0;
   }
 }

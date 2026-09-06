@@ -2,7 +2,7 @@
 A C++TCP client and server backed by an in-memory key-value store
 
 The current implementation milestone is documented in
-[`docs/NEXT_GOAL.md`](docs/NEXT_GOAL.md).
+[`docs/EPOLL_TUTORIAL.md`](docs/EPOLL_TUTORIAL.md).
 
 ## Build
 
