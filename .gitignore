@@ -5,4 +5,4 @@ build/
 compile_commands.json
 build_instructions.md
 .DS_Store
-docs/
+.zed/

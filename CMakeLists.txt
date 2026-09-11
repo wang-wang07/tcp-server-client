@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 3.20)
 
 project(tcp_server_client LANGUAGES CXX)
 
+# Give an explicit platform error instead of missing epoll headers later.
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  message(FATAL_ERROR "This project targets Linux. Build inside the Linux container.")
+endif()
+
 include(CTest)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -21,14 +26,15 @@ function(target_enable_warnings target)
 endfunction()
 
 add_library(tcp_common
+  src/net/event_poller.cpp
   src/net/socket.cpp
   src/net/unique_fd.cpp
   src/protocol/executor.cpp
   src/protocol/framing.cpp
   src/protocol/parser.cpp
-  src/server/client_handler.cpp
   src/server/connection.cpp
   src/store.cpp
+  include/tcp/net/event_poller.hpp
   include/tcp/net/socket.hpp
   include/tcp/net/unique_fd.hpp
   include/tcp/protocol/command.hpp
@@ -36,7 +42,6 @@ add_library(tcp_common
   include/tcp/protocol/framing.hpp
   include/tcp/protocol/parser.hpp
   include/tcp/protocol/protocol.hpp
-  include/tcp/server/client_handler.hpp
   include/tcp/server/connection.hpp
   include/tcp/store.hpp
 )
