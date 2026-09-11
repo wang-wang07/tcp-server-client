@@ -71,12 +71,14 @@ TEST(ConnectionTest, ConnectionsUseTheSameStore) {
   EXPECT_EQ(second.output_buffer, "value\n");
 }
 
+// A newline must fit inside the 64 KiB allowance. One byte below the cap
+// remains repairable; filling that last byte with non-newline data is fatal.
 TEST(ConnectionTest, BoundsIncompleteInput) {
   KeyValueStore store;
   Connection connection{UniqueFd{}};
 
   ASSERT_EQ(connection.process_input(
-                std::string(Connection::kMaxInputBytes, 'x'), store),
+                std::string(Connection::kMaxInputBytes - 1, 'x'), store),
             InputResult::Ok);
 
   EXPECT_EQ(connection.process_input("x", store),
@@ -86,24 +88,6 @@ TEST(ConnectionTest, BoundsIncompleteInput) {
   EXPECT_EQ(store.count(), 0U);
 }
 
-TEST(ConnectionTest, BoundsOutputWithoutRollingBackExecutedCommands) {
-  KeyValueStore store;
-  Connection connection{UniqueFd{}};
-
-  // Fill the queue with actual COUNT responses: each is "0\n".
-  const std::string batch = "COUNT\n";
-  for (std::size_t i = 0; i < Connection::kMaxOutputBytes / 2; ++i) {
-    ASSERT_EQ(connection.process_input(batch, store), InputResult::Ok);
-  }
-
-  ASSERT_EQ(connection.output_buffer.size(), Connection::kMaxOutputBytes);
-
-  EXPECT_EQ(connection.process_input("SET committed value\n", store),
-            InputResult::OutputLimit);
-  EXPECT_EQ(connection.output_buffer.size(), Connection::kMaxOutputBytes);
-  EXPECT_TRUE(store.exists("committed"));
-
-} // End this test before declaring the independent send tests.
 
 // Model a prefix already accepted by send(), then append another response.
 // This checks accounting and ordering without depending on socket timing.
@@ -213,4 +197,79 @@ TEST(ConnectionTest, ReportsBrokenPeerWithoutSigpipe) {
   EXPECT_EQ(result.error().value(), EPIPE);
   EXPECT_EQ(connection.output_cursor, 0U);
   EXPECT_TRUE(connection.socket.valid());
+}
+// Backpressure must defer a mutation, retain its frame, and resume only after
+// the low-water threshold is reached. Cursor changes model successful sends.
+TEST(ConnectionTest, BackpressureDefersMutationUntilLowWater) {
+  KeyValueStore store;
+  Connection connection{UniqueFd{}};
+  connection.output_buffer.assign(Connection::kOutputHighWater, 'x');
+  ASSERT_EQ(connection.process_input("SET delayed value\n", store), InputResult::Ok);
+  // Accepted input is deferred: no mutation, runnable work, or new reads yet.
+  EXPECT_TRUE(connection.output_paused);
+  EXPECT_FALSE(store.exists("delayed"));
+  EXPECT_TRUE(connection.has_complete_frame());
+  EXPECT_FALSE(connection.has_runnable_input());
+  EXPECT_FALSE(connection.can_read());
+  // Leave low-water + 1 bytes pending: hysteresis must preserve the pause.
+  connection.output_cursor = Connection::kOutputHighWater - Connection::kOutputLowWater - 1;
+  ASSERT_EQ(connection.process_input("", store), InputResult::Ok);
+  EXPECT_TRUE(connection.output_paused);
+  EXPECT_FALSE(store.exists("delayed"));
+  // process_input compacted the prefix and reset the cursor. One more sent
+  // byte reaches low-water exactly and permits the retained SET to execute.
+  connection.output_cursor = 1;
+  ASSERT_EQ(connection.process_input("", store), InputResult::Ok);
+  EXPECT_FALSE(connection.output_paused);
+  EXPECT_TRUE(store.exists("delayed"));
+  EXPECT_EQ(connection.output_buffer.substr(Connection::kOutputLowWater), "OK\n");
+  EXPECT_FALSE(connection.has_complete_frame());
+}
+
+// A budget may defer complete frames, but another empty-input visit must
+// execute them without waiting for a new client send or replaying old frames.
+TEST(ConnectionTest, ResumesBufferedCommandsWithoutNewInput) {
+  KeyValueStore store;
+  Connection connection{UniqueFd{}};
+  std::string batch;
+  // Five extra COUNT frames force a second visit; each reply is two bytes.
+  for (std::size_t i = 0; i < Connection::kCommandBudget + 5; ++i) {
+    batch += "COUNT\n";
+  }
+  ASSERT_EQ(connection.process_input(batch, store), InputResult::Ok);
+  EXPECT_EQ(connection.pending_output_bytes(), Connection::kCommandBudget * 2);
+  // The remaining complete frames are runnable; reads yield to this backlog.
+  EXPECT_TRUE(connection.has_runnable_input());
+  EXPECT_FALSE(connection.can_read());
+  ASSERT_EQ(connection.process_input("", store), InputResult::Ok);
+  EXPECT_EQ(connection.pending_output_bytes(), (Connection::kCommandBudget + 5) * 2);
+  EXPECT_EQ(connection.pending_input_bytes(), 0U);
+  EXPECT_TRUE(connection.can_read());
+}
+
+// Direct store insertion bypasses wire-frame bounds. The defensive response
+// check must reject a value whose reply newline exceeds the reserved size.
+TEST(ConnectionTest, RejectsOversizedResponse) {
+  KeyValueStore store;
+  Connection connection{UniqueFd{}};
+  store.set("large", std::string(Connection::kMaxResponseBytes, 'x'));
+  EXPECT_EQ(connection.process_input("GET large\n", store), InputResult::OutputLimit);
+  EXPECT_TRUE(connection.output_buffer.empty());
+}
+
+// Exactly 64 KiB is valid when the last byte IS the required newline.
+TEST(ConnectionTest, AcceptsFrameAtExactInputLimit) {
+  KeyValueStore store;
+  Connection connection{UniqueFd{}};
+  std::string frame = "SET edge ";
+  // Reserve the command prefix and one delimiter byte before filling the value.
+  const auto value_bytes = Connection::kMaxInputBytes - frame.size() - 1;
+  frame.append(value_bytes, 'x');
+  frame.push_back('\n');
+  ASSERT_EQ(connection.process_input(frame, store), InputResult::Ok);
+  EXPECT_EQ(connection.output_buffer, "OK\n");
+  const auto value = store.get("edge");
+  // Check presence before dereferencing the optional store result.
+  ASSERT_TRUE(value.has_value());
+  EXPECT_EQ(value->size(), value_bytes);
 }
