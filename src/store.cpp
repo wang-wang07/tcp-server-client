@@ -12,7 +12,6 @@ KeyValueStore::get(const std::string& key) const {
   if (item == data_.end()) {
     return std::nullopt;
   }
-
   return item->second;
 }
 
