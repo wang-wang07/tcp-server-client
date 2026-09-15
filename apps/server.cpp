@@ -20,7 +20,6 @@ namespace {
 using tcp::server::Connection;
 using tcp::server::InputResult;
 using Clients = std::unordered_map<int, Connection>;
-
 constexpr std::size_t kMaxClients = 128; // Live owners, not the listen backlog.
 constexpr auto kIdleTimeout = std::chrono::seconds{30};
 constexpr int kTimerPollMs = 1000; // Wake even if no socket becomes ready.
