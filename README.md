@@ -70,6 +70,3 @@ partial I/O, and backpressure. The TCP integration workload checks connection
 limits, idle expiry, slow readers, resets, and half-close draining; it reports
 throughput, p95 latency, CPU, and sampled RSS. Stop the server first to free port
 8080; the workload includes a 30-second timeout wait.
-
-More detail: [server design](docs/EPOLL_SERVER_DESIGN.md) ·
-[guarantees](docs/SERVER_GUARANTEES.md) · [networking roadmap](docs/EPOLL_TUTORIAL.md).
