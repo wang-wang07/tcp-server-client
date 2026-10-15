@@ -1,0 +1,8 @@
+PASS: 7 completed cases, 60 measurement seconds per case.
+PASS: 51,385,547 measured working-client operations; zero response errors.
+PASS: Aggregate histograms, GET/SET counts, per-second counts and throughput agree.
+PASS: p50/p95/p99 independently recomputed from saved worker histograms.
+PASS: Sampled connection counts equal requested working plus stalled clients.
+PASS: 60/60 nonempty server send-queue samples in each stalled-reader case.
+PASS: Three stalled-reader renewals per interference case.
+PASS: Current benchmark source and server executable match recorded SHA-256 hashes.
