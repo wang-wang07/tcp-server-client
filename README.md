@@ -2,8 +2,7 @@
 
 This is a small Linux C++23 project for learning network server fundamentals. It
 uses nonblocking TCP sockets and `epoll` directly. It runs as a single process
-and keeps its key-value store in memory, so data is lost when it exits. Raft,
-persistence, and sharding are not implemented.
+and keeps its key-value store in memory, so data is lost when it exits.
 
 One event-loop thread buffers partial requests and writes, with bounded work
 per connection and backpressure for slow readers. The server allows 128 clients,
