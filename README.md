@@ -1,8 +1,7 @@
 # C++ TCP Key-Value Server
 
 A Linux-only C++23 in-memory key-value server with nonblocking TCP and direct
-`epoll`, built without networking frameworks. Currently single-node;
-Raft replication, persistence, and sharding are [planned](docs/DISTRIBUTED_KV_TUTORIAL.md).
+`epoll`, built without networking frameworks.
 
 ## Architecture
 
