@@ -1,0 +1,100 @@
+Internal ctest changing into directory: /workspace/build/resume-release
+Test project /workspace/build/resume-release
+      Start  1: ConnectionTest.TakesSocketOwnership
+ 1/47 Test  #1: ConnectionTest.TakesSocketOwnership .................................   Passed    0.00 sec
+      Start  2: ConnectionTest.HandlesFragmentsBatchesErrorsAndIncompleteTails
+ 2/47 Test  #2: ConnectionTest.HandlesFragmentsBatchesErrorsAndIncompleteTails ......   Passed    0.00 sec
+      Start  3: ConnectionTest.ConnectionsUseTheSameStore
+ 3/47 Test  #3: ConnectionTest.ConnectionsUseTheSameStore ...........................   Passed    0.00 sec
+      Start  4: ConnectionTest.BoundsIncompleteInput
+ 4/47 Test  #4: ConnectionTest.BoundsIncompleteInput ................................   Passed    0.00 sec
+      Start  5: ConnectionTest.ReclaimsSentPrefixBeforeAppendingReplies
+ 5/47 Test  #5: ConnectionTest.ReclaimsSentPrefixBeforeAppendingReplies .............   Passed    0.00 sec
+      Start  6: ConnectionTest.PreservesOutputAcrossWouldBlockAndResumes
+ 6/47 Test  #6: ConnectionTest.PreservesOutputAcrossWouldBlockAndResumes ............   Passed    0.00 sec
+      Start  7: ConnectionTest.ReportsBrokenPeerWithoutSigpipe
+ 7/47 Test  #7: ConnectionTest.ReportsBrokenPeerWithoutSigpipe ......................   Passed    0.00 sec
+      Start  8: ConnectionTest.BackpressureDefersMutationUntilLowWater
+ 8/47 Test  #8: ConnectionTest.BackpressureDefersMutationUntilLowWater ..............   Passed    0.00 sec
+      Start  9: ConnectionTest.ResumesBufferedCommandsWithoutNewInput
+ 9/47 Test  #9: ConnectionTest.ResumesBufferedCommandsWithoutNewInput ...............   Passed    0.00 sec
+      Start 10: ConnectionTest.RejectsOversizedResponse
+10/47 Test #10: ConnectionTest.RejectsOversizedResponse .............................   Passed    0.00 sec
+      Start 11: ConnectionTest.AcceptsFrameAtExactInputLimit
+11/47 Test #11: ConnectionTest.AcceptsFrameAtExactInputLimit ........................   Passed    0.00 sec
+      Start 12: EventPollerTest.DistinguishesTimeoutFromError
+12/47 Test #12: EventPollerTest.DistinguishesTimeoutFromError .......................   Passed    0.00 sec
+      Start 13: EventPollerTest.ModifiesInterestWithoutOwningSocket
+13/47 Test #13: EventPollerTest.ModifiesInterestWithoutOwningSocket .................   Passed    0.00 sec
+      Start 14: EventPollerTest.HalfClosePreservesReadableBytes
+14/47 Test #14: EventPollerTest.HalfClosePreservesReadableBytes .....................   Passed    0.00 sec
+      Start 15: EventPollerTest.RemovalClearsQueuedReadiness
+15/47 Test #15: EventPollerTest.RemovalClearsQueuedReadiness ........................   Passed    0.00 sec
+      Start 16: ExecutorTest.SetStoresValueAndReturnsOk
+16/47 Test #16: ExecutorTest.SetStoresValueAndReturnsOk .............................   Passed    0.00 sec
+      Start 17: ExecutorTest.GetReturnsValueOrNotFound
+17/47 Test #17: ExecutorTest.GetReturnsValueOrNotFound ..............................   Passed    0.00 sec
+      Start 18: ExecutorTest.EraseReportsWhetherKeyExisted
+18/47 Test #18: ExecutorTest.EraseReportsWhetherKeyExisted ..........................   Passed    0.00 sec
+      Start 19: ExecutorTest.ExistsReturnsNumericBoolean
+19/47 Test #19: ExecutorTest.ExistsReturnsNumericBoolean ............................   Passed    0.00 sec
+      Start 20: ExecutorTest.CountTracksEntriesRatherThanAssignments
+20/47 Test #20: ExecutorTest.CountTracksEntriesRatherThanAssignments ................   Passed    0.00 sec
+      Start 21: FramingTest.LeavesIncompleteMessageInBuffer
+21/47 Test #21: FramingTest.LeavesIncompleteMessageInBuffer .........................   Passed    0.00 sec
+      Start 22: FramingTest.ExtractsMessagesAndPreservesRemainder
+22/47 Test #22: FramingTest.ExtractsMessagesAndPreservesRemainder ...................   Passed    0.00 sec
+      Start 23: FramingTest.SupportsEmptyAndConsecutiveMessages
+23/47 Test #23: FramingTest.SupportsEmptyAndConsecutiveMessages .....................   Passed    0.00 sec
+      Start 24: FramingSocketTest.ReadsBufferedMessageWithoutUsingSocket
+24/47 Test #24: FramingSocketTest.ReadsBufferedMessageWithoutUsingSocket ............   Passed    0.00 sec
+      Start 25: FramingSocketTest.SendsAndReadsMultipleMessages
+25/47 Test #25: FramingSocketTest.SendsAndReadsMultipleMessages .....................   Passed    0.00 sec
+      Start 26: FramingSocketTest.CombinesExistingPartialDataWithSocketData
+26/47 Test #26: FramingSocketTest.CombinesExistingPartialDataWithSocketData .........   Passed    0.00 sec
+      Start 27: FramingSocketTest.ReturnsNoMessageAndKeepsPartialDataAtEof
+27/47 Test #27: FramingSocketTest.ReturnsNoMessageAndKeepsPartialDataAtEof ..........   Passed    0.00 sec
+      Start 28: FramingSocketTest.SendingEmptyMessageSucceeds
+28/47 Test #28: FramingSocketTest.SendingEmptyMessageSucceeds .......................   Passed    0.00 sec
+      Start 29: UniqueFdTest.DefaultInstanceIsInvalid
+29/47 Test #29: UniqueFdTest.DefaultInstanceIsInvalid ...............................   Passed    0.00 sec
+      Start 30: UniqueFdTest.ClosesOwnedDescriptorOnDestruction
+30/47 Test #30: UniqueFdTest.ClosesOwnedDescriptorOnDestruction .....................   Passed    0.00 sec
+      Start 31: UniqueFdTest.MoveConstructionTransfersOwnership
+31/47 Test #31: UniqueFdTest.MoveConstructionTransfersOwnership .....................   Passed    0.00 sec
+      Start 32: UniqueFdTest.MoveAssignmentClosesOldDescriptor
+32/47 Test #32: UniqueFdTest.MoveAssignmentClosesOldDescriptor ......................   Passed    0.00 sec
+      Start 33: SocketTest.CreatesOwnedSocket
+33/47 Test #33: SocketTest.CreatesOwnedSocket .......................................   Passed    0.00 sec
+      Start 34: SocketTest.ReportsSocketCreationFailure
+34/47 Test #34: SocketTest.ReportsSocketCreationFailure .............................   Passed    0.00 sec
+      Start 35: SocketTest.SetsSocketToNonblocking
+35/47 Test #35: SocketTest.SetsSocketToNonblocking ..................................   Passed    0.00 sec
+      Start 36: SocketTest.SettingNonblockingIsIdempotent
+36/47 Test #36: SocketTest.SettingNonblockingIsIdempotent ...........................   Passed    0.00 sec
+      Start 37: SocketTest.ReportsNonblockingConfigurationFailure
+37/47 Test #37: SocketTest.ReportsNonblockingConfigurationFailure ...................   Passed    0.00 sec
+      Start 38: ParserTest.ParsesEverySupportedCommand
+38/47 Test #38: ParserTest.ParsesEverySupportedCommand ..............................   Passed    0.00 sec
+      Start 39: ParserTest.AcceptsFlexibleWhitespace
+39/47 Test #39: ParserTest.AcceptsFlexibleWhitespace ................................   Passed    0.00 sec
+      Start 40: ParserTest.RejectsMalformedCommands
+40/47 Test #40: ParserTest.RejectsMalformedCommands .................................   Passed    0.00 sec
+      Start 41: ProtocolIntegrationTest.ExecutesCommandSequenceAgainstSharedStore
+41/47 Test #41: ProtocolIntegrationTest.ExecutesCommandSequenceAgainstSharedStore ...   Passed    0.00 sec
+      Start 42: StoreTest.StartsEmpty
+42/47 Test #42: StoreTest.StartsEmpty ...............................................   Passed    0.00 sec
+      Start 43: StoreTest.SetsAndGetsValues
+43/47 Test #43: StoreTest.SetsAndGetsValues .........................................   Passed    0.00 sec
+      Start 44: StoreTest.OverwritesWithoutAddingAnotherEntry
+44/47 Test #44: StoreTest.OverwritesWithoutAddingAnotherEntry .......................   Passed    0.00 sec
+      Start 45: StoreTest.ErasesOnlyExistingEntries
+45/47 Test #45: StoreTest.ErasesOnlyExistingEntries .................................   Passed    0.00 sec
+      Start 46: StoreTest.SupportsEmptyKeysAndValues
+46/47 Test #46: StoreTest.SupportsEmptyKeysAndValues ................................   Passed    0.00 sec
+      Start 47: ServerResourceCheck
+47/47 Test #47: ServerResourceCheck .................................................   Passed   31.80 sec
+
+100% tests passed, 0 tests failed out of 47
+
+Total Test time (real) =  31.89 sec

@@ -73,3 +73,10 @@ throughput, p95 latency, CPU, and sampled RSS. Stop the server first to free por
 
 More detail: [server design](docs/EPOLL_SERVER_DESIGN.md) ·
 [guarantees](docs/SERVER_GUARANTEES.md) · [networking roadmap](docs/EPOLL_TUTORIAL.md).
+
+## Benchmarks
+
+The [benchmark](benchmarks/README.md) runs GET/SET traffic for 60 seconds per case,
+with and without stalled readers. See the [results](benchmarks/RESULTS.md) for
+the numbers and resume bullet, or the [walkthrough](docs/BENCHMARK_WALKTHROUGH.md)
+for an explanation of how it works.
