@@ -4,5 +4,6 @@ build/
 .cache/
 compile_commands.json
 build_instructions.md
+/docs/
 .DS_Store
 .zed/

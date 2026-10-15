@@ -1,51 +1,35 @@
 # Server benchmark
 
-This script sends GET and SET requests to the server and checks every reply.
-It also tries a client that asks for lots of data but never reads it, to see
-whether the other clients can still get work done.
+This script measures GET/SET traffic against the local server, including runs
+with a client that stops reading its replies. It checks replies from every
+working client. Results are for loopback, not internet or EC2 performance.
 
-## Run it
+Use Linux, Python 3.10+, and at least three available logical CPUs. Keep port
+8080 free. The script starts and stops the server. If Python is missing in the
+dev container, install it with `apt-get update` and
+`apt-get install -y --no-install-recommends python3`.
 
-Use the Linux dev container, with Python 3.10+ and at least 3 available logical CPUs.
-Leave port 8080 free. The script starts the server itself.
+Build and run the full benchmark from the project root:
 
 ```sh
-# If Python is missing from the container:
-apt-get update
-apt-get install -y --no-install-recommends python3
-
 cmake -S . -B build/benchmark-release -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
 cmake --build build/benchmark-release --parallel 4
 ctest --test-dir build/benchmark-release --output-on-failure
-
-# Quick check before the longer run
-python3 benchmarks/mixed_workload.py \
-  --server build/benchmark-release/server \
-  --output build/benchmark-smoke --seconds 2 --warmup 1 --smoke
-
-# Full run, roughly 8 minutes
 python3 benchmarks/mixed_workload.py \
   --server build/benchmark-release/server \
   --output build/benchmark-results --seconds 60 --warmup 5
 ```
 
-Use a new output folder each time. Keep other heavy programs and tests stopped
-while it runs. Inside the container, these commands run from the project folder.
+The run takes about eight minutes. Use a new output directory each time and
+avoid running other heavy work during measurement. For a quick check, add
+`--seconds 2 --warmup 1 --smoke` and use a different output directory.
 
-## What it tests
+The workload uses 10,000 keys, 256-byte values, and 80% GET / 20% SET requests.
+It measures 1, 32, and 127 working clients with and without a stalled reader,
+plus 128 working clients without one. Each working client waits for its reply
+before sending again. Stalled clients are renewed every 20 seconds so the
+server's idle timeout does not remove them during a run. Only working-client
+replies count in the results.
 
-- 10,000 keys, 256-byte values, 80% GET and 20% SET.
-- 5 seconds to warm up, then 60 seconds of measurements per case.
-- 1, 32, and 127 working clients, each with and without a stalled reader.
-- One extra run with 128 working clients. That's the server's connection limit,
-  so the biggest stalled-reader case uses 127 working clients + 1 stalled client.
-
-Each working client waits for its reply before sending another request. Stalled
-clients are replaced every 20 seconds so the idle timeout doesn't remove the
-problem halfway through. Only working-client replies count toward the results.
-
-The output folder has request counts, latency histograms, CPU/memory samples,
-and server logs. These are local loopback measurements, not internet or EC2 speeds.
-
-[Results and resume bullet](RESULTS.md) ·
-[Step-by-step explanation](../docs/BENCHMARK_WALKTHROUGH.md)
+See the [results](RESULTS.md), including links to the tracked CSV and JSON
+measurements.

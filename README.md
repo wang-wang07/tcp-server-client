@@ -1,32 +1,19 @@
-# C++ TCP Key-Value Server
+# TCP key-value server
 
-A Linux-only C++23 in-memory key-value server with nonblocking TCP and direct
-`epoll`, built without networking frameworks. Currently single-node;
-Raft replication, persistence, and sharding are [planned](docs/DISTRIBUTED_KV_TUTORIAL.md).
+This is a small Linux C++23 project for learning network server fundamentals. It
+uses nonblocking TCP sockets and `epoll` directly. It runs as a single process
+and keeps its key-value store in memory, so data is lost when it exits. Raft,
+persistence, and sharding are not implemented.
 
-## Architecture
+One event-loop thread buffers partial requests and writes, with bounded work
+per connection and backpressure for slow readers. The server allows 128 clients,
+64 KiB input and 128 KiB output buffers per connection, and a 30-second inactivity
+timeout. The store itself has no size limit.
 
-```text
-Request: client -> input buffer -> parser -> executor -> shared store
-Reply:   executor -> output buffer -> client
-```
-
-- **Event loop:** one thread uses level-triggered `epoll` through `EventPoller`.
-  Listener/client sockets are nonblocking; `EPOLLOUT` is enabled only for pending replies.
-- **Stream handling:** each `Connection` owns its socket via RAII, buffers partial
-  requests, and resumes partial writes after `EAGAIN`. Buffered commands are
-  scheduled without waiting for another socket event.
-- **Fairness and backpressure:** bounded accept/read/write work and 32 commands per
-  visit. Slow readers pause reads and execution at 64 KiB queued output, resuming
-  at 32 KiB. Limits: 128 clients, 64 KiB input / 128 KiB output per connection,
-  and a 30-second inactivity timeout.
-- **State:** commands execute serially against one `std::unordered_map`, preserving
-  each connection's request order. Store size is unbounded; all data is lost on exit.
-
-## Protocol
-
-Requests and replies end in `\n`; fragmented and pipelined requests are supported.
-Commands are uppercase, with whitespace-separated keys/values and no escaping.
+Clients send one uppercase command per line. Keys and values are single
+whitespace-separated tokens, with no escaping. Replies are newline terminated.
+Commands execute in order within each connection, but replies are untyped; if a
+connection is lost, a client may not know whether its last change took effect.
 
 | Request | Reply |
 | --- | --- |
@@ -36,47 +23,27 @@ Commands are uppercase, with whitespace-separated keys/values and no escaping.
 | `EXISTS key` | `1` or `0` |
 | `COUNT` | Number of keys |
 
-Malformed commands return `INVALID COMMAND MESSAGE`. Replies are untyped;
-a lost reply can leave a mutation's outcome unknown to the client.
-
 ## Build and run
 
-Requires Linux (or the included dev container), a C++23 compiler/standard library
-with `std::expected`, CMake 3.20+, and Perl for integration tests. Configuration
-downloads pinned GoogleTest; use `-DBUILD_TESTING=OFF` to skip tests and the download.
+Build on Linux (or in the included dev container) with CMake 3.20+, a C++23
+compiler and standard library supporting `std::expected`, and Perl for the
+integration tests. CMake downloads GoogleTest when tests are enabled; pass
+`-DBUILD_TESTING=OFF` to skip tests and that download.
 
 ```sh
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 cmake --build build -j
-./build/server                 # listens on 0.0.0.0:8080
+./build/server
 ```
 
-In another terminal:
+The server listens on port 8080. In another terminal:
 
 ```sh
 printf 'SET greeting hello\nGET greeting\n' | ./build/client
-# Server: OK
-# Server: hello
 ```
 
-## Tests
-
-```sh
-ctest --test-dir build --output-on-failure
-```
-
-GoogleTest covers parsing, framing, store operations, socket ownership, epoll,
-partial I/O, and backpressure. The TCP integration workload checks connection
-limits, idle expiry, slow readers, resets, and half-close draining; it reports
-throughput, p95 latency, CPU, and sampled RSS. Stop the server first to free port
-8080; the workload includes a 30-second timeout wait.
-
-More detail: [server design](docs/EPOLL_SERVER_DESIGN.md) ·
-[guarantees](docs/SERVER_GUARANTEES.md) · [networking roadmap](docs/EPOLL_TUTORIAL.md).
-
-## Benchmarks
-
-The [benchmark](benchmarks/README.md) runs GET/SET traffic for 60 seconds per case,
-with and without stalled readers. See the [results](benchmarks/RESULTS.md) for
-the numbers and resume bullet, or the [walkthrough](docs/BENCHMARK_WALKTHROUGH.md)
-for an explanation of how it works.
+Stop the server to free port 8080, then run
+`ctest --test-dir build --output-on-failure`. Tests cover the protocol, store,
+partial I/O, backpressure, and connection limits. The
+[benchmark instructions](benchmarks/README.md) describe the mixed GET/SET
+workload and link to its [measured results](benchmarks/RESULTS.md).
